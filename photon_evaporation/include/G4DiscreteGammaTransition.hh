@@ -81,7 +81,7 @@ class G4DiscreteGammaTransition : public G4VGammaTransition
 public:
 
   G4DiscreteGammaTransition(const G4NuclearLevel* level,
-                G4int Z, G4int ver);
+			    G4int Z, G4int ver);
 
   virtual ~G4DiscreteGammaTransition();
 
@@ -103,7 +103,6 @@ public:
   G4double GetThetaFromWTheta(G4double higherLevelEnergy);
   G4double LegendreP(G4int n, G4double x);
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 
   inline void Update(const G4NuclearLevel* level, G4int Z)
   {
@@ -137,7 +136,6 @@ private:
   std::vector<G4double> _maxWTheta;
   std::vector<G4double> _higherLevelEnergy;
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 };
 
 #endif

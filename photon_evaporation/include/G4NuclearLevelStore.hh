@@ -23,7 +23,7 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: G4NuclearLevelStore.hh 86986 2014-11-21 13:00:05Z gcosmo $
+// $Id: G4NuclearLevelStore.hh 88406 2015-02-18 09:13:29Z gcosmo $
 //
 // 04-10-2010  M. Kelsey -- Replace G4String keys with integers (ZZZAAA),
 //		            move string operation to GenerateFilename()
@@ -42,8 +42,6 @@
 #define G4NuclearLevelStore_hh 1
 
 #include "G4NuclearLevelManager.hh"
-#include "G4LevelManager.hh"
-#include "G4LevelReader.hh"
 #include "G4ThreadLocalSingleton.hh"
 #include "globals.hh"
 #include <map>
@@ -65,12 +63,10 @@ public:
 
   G4NuclearLevelManager* GetManager(G4int Z, G4int A);
 
-  G4LevelManager* GetLevelManager(G4int Z, G4int A);
-
   ~G4NuclearLevelStore();
 
   void AddUserEvaporationDataFile(G4int Z, G4int A,
-                  const G4String& filename);
+				  const G4String& filename);
 
   // Evan Rand - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void AddUserMultipoleDataFile(G4int Z, G4int A,G4String filename);
@@ -104,11 +100,9 @@ private:
   G4String GenerateFileName(G4int Z, G4int A) const;
 
   typedef std::map<G4int,G4NuclearLevelManager*> ManagersMap;
-  typedef std::map<G4int,G4LevelManager*> MapForHEP;
 
-  G4LevelReader reader;
   ManagersMap   theManagers;
-  MapForHEP     managersForHEP;
+
   G4String      dirName;
 
   // Evan Rand - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -122,7 +116,7 @@ private:
   std::map<G4int, G4double> groundStateSpinAngularMomentum;
   std::map<G4int, G4String> theUserDataFilesMultipole;
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
 
   // Will Ashfield - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   G4double A2;
@@ -130,8 +124,6 @@ private:
   G4double A6;
   G4bool boolIncludeACcoeffs;
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
 
   static G4ThreadLocal G4NuclearLevelStore* theInstance;
 #ifdef G4MULTITHREADED

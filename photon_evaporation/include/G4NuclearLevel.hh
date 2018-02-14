@@ -67,14 +67,14 @@ class G4NuclearLevel
 
 public:
   G4NuclearLevel(G4double energy, G4double halfLife,
-         G4double angularMomentum, const std::vector<G4double>& eGamma,
-         const std::vector<G4double>& wGamma, const std::vector<G4double>& polarities,
-         const std::vector<G4double>& kCC, const std::vector<G4double>& l1CC,
-         const std::vector<G4double>& l2CC, const std::vector<G4double>& l3CC,
-         const std::vector<G4double>& m1CC, const std::vector<G4double>& m2CC,
-         const std::vector<G4double>& m3CC, const std::vector<G4double>& m4CC,
-         const std::vector<G4double>& m5CC, const std::vector<G4double>& nPlusCC,
-         const std::vector<G4double>& totalCC);
+		 G4double angularMomentum, const std::vector<G4double>& eGamma,
+		 const std::vector<G4double>& wGamma, const std::vector<G4double>& polarities,
+		 const std::vector<G4double>& kCC, const std::vector<G4double>& l1CC,
+		 const std::vector<G4double>& l2CC, const std::vector<G4double>& l3CC,
+		 const std::vector<G4double>& m1CC, const std::vector<G4double>& m2CC,
+		 const std::vector<G4double>& m3CC, const std::vector<G4double>& m4CC,
+		 const std::vector<G4double>& m5CC, const std::vector<G4double>& nPlusCC,
+		 const std::vector<G4double>& totalCC);
 
   ~G4NuclearLevel();
 
@@ -177,7 +177,7 @@ private:
   G4NuclearLevel();
 
   G4NuclearLevel(G4double energy, G4double halfLife,
-         G4double angularMomentum);
+		 G4double angularMomentum);
 
   void Finalize();
 
@@ -221,7 +221,6 @@ private:
   std::vector< std::vector< G4double > > _maxWTheta;
   std::vector< std::vector< G4double > > _higherLevelEnergy;
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 };
 
 #endif

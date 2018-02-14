@@ -23,7 +23,7 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: G4NuclearLevelManager.cc 87163 2014-11-26 08:46:54Z gcosmo $
+// $Id: G4NuclearLevelManager.cc 93357 2015-10-19 13:40:13Z gcosmo $
 //
 // -------------------------------------------------------------------
 //      GEANT 4 class file
@@ -80,13 +80,13 @@ G4double G4NuclearLevelManager::_nPlusCC=0.;
 G4double G4NuclearLevelManager::_totalCC=0.;
 
 G4NuclearLevelManager::G4NuclearLevelManager(G4int Z, G4int A,
-                         const G4String& filename) :
+					     const G4String& filename) :
     _nucleusA(A), _nucleusZ(Z), _validity(false),
     _levels(0)
 {
   if (A <= 0 || Z <= 0 || Z > A ) {
     throw G4HadronicException(__FILE__, __LINE__,
-                  "==== G4NuclearLevelManager ==== (Z,A) <0, or Z>A");
+			      "==== G4NuclearLevelManager ==== (Z,A) <0, or Z>A");
   }
   MakeLevels(filename);
 }
@@ -100,7 +100,7 @@ void G4NuclearLevelManager::SetNucleus(G4int Z, G4int A, const G4String& filenam
 {
   if (A <= 0 || Z <= 0 || Z > A ) {
     throw G4HadronicException(__FILE__, __LINE__,
-                  "==== G4NuclearLevelManager ==== (Z,A) <0, or Z>A");
+			      "==== G4NuclearLevelManager ==== (Z,A) <0, or Z>A");
   }
   if (_nucleusZ != Z || _nucleusA != A)
     {
@@ -138,10 +138,10 @@ G4NuclearLevelManager::NearestLevel(G4double energy, G4double) const
       G4double eDiff = std::fabs(e - energy);
       //G4cout << i << ".   eDiff(MeV)= " << eDiff/MeV << G4endl;
       if (eDiff <= diff)
-    {
-      diff = eDiff;
-      iNear = i;
-    }
+	{
+	  diff = eDiff;
+	  iNear = i;
+	}
     }
 
   return GetLevel(iNear);	// Includes range checking on iNear
@@ -193,31 +193,31 @@ G4bool G4NuclearLevelManager::ReadDataLine(std::ifstream& dataFile) {
   if (dataFile >> _levelEnergy)
     {
       dataFile >> _gammaEnergy >> _probability >> _polarity >> _halfLife
-           >> _angularMomentum  >> _totalCC >> _kCC >> _l1CC >> _l2CC
-           >> _l3CC >> _m1CC >> _m2CC >> _m3CC >> _m4CC >> _m5CC
-           >> _nPlusCC;
+	       >> _angularMomentum  >> _totalCC >> _kCC >> _l1CC >> _l2CC
+	       >> _l3CC >> _m1CC >> _m2CC >> _m3CC >> _m4CC >> _m5CC
+	       >> _nPlusCC;
     }
   else result = false;
   *****/
 
   // Each item will return iostream status
   return (ReadDataItem(dataFile, _levelEnergy) &&
-      ReadDataItem(dataFile, _gammaEnergy) &&
-      ReadDataItem(dataFile, _probability) &&
-      ReadDataItem(dataFile, _polarity) &&
-      ReadDataItem(dataFile, _halfLife) &&
-      ReadDataItem(dataFile, _angularMomentum) &&
-      ReadDataItem(dataFile, _totalCC) &&
-      ReadDataItem(dataFile, _kCC) &&
-      ReadDataItem(dataFile, _l1CC) &&
-      ReadDataItem(dataFile, _l2CC) &&
-      ReadDataItem(dataFile, _l3CC) &&
-      ReadDataItem(dataFile, _m1CC) &&
-      ReadDataItem(dataFile, _m2CC) &&
-      ReadDataItem(dataFile, _m3CC) &&
-      ReadDataItem(dataFile, _m4CC) &&
-      ReadDataItem(dataFile, _m5CC) &&
-      ReadDataItem(dataFile, _nPlusCC) );
+	  ReadDataItem(dataFile, _gammaEnergy) &&
+	  ReadDataItem(dataFile, _probability) &&
+	  ReadDataItem(dataFile, _polarity) &&
+	  ReadDataItem(dataFile, _halfLife) &&
+	  ReadDataItem(dataFile, _angularMomentum) &&
+	  ReadDataItem(dataFile, _totalCC) &&
+	  ReadDataItem(dataFile, _kCC) &&
+	  ReadDataItem(dataFile, _l1CC) &&
+	  ReadDataItem(dataFile, _l2CC) &&
+	  ReadDataItem(dataFile, _l3CC) &&
+	  ReadDataItem(dataFile, _m1CC) &&
+	  ReadDataItem(dataFile, _m2CC) &&
+	  ReadDataItem(dataFile, _m3CC) &&
+	  ReadDataItem(dataFile, _m4CC) &&
+	  ReadDataItem(dataFile, _m5CC) &&
+	  ReadDataItem(dataFile, _nPlusCC) );
 }
 
 // Evan Rand - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -344,6 +344,7 @@ void G4NuclearLevelManager::MakeLevels(const G4String& filename)
   G4NuclearLevel* thisLevel = 0;
   G4int nData = 0;
 
+  // Loop checking, 05-Aug-2015, Vladimir Ivanchenko
   while (Read(inFile)) {
     thisLevel = UseLevelOrMakeNew(thisLevel);	// May create new pointer
     AddDataToLevel(thisLevel);
@@ -474,15 +475,16 @@ G4NuclearLevelManager::FindNextHighestEnergyLevel(G4double levelEnergy)
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+
 void G4NuclearLevelManager::PrintAll()
 {
   G4int nLevels = NumberOfLevels();
 
   G4cout << " ==== G4NuclearLevelManager ==== (" << _nucleusZ << ", " << _nucleusA
-     << ") has " << nLevels << " levels" << G4endl
-     << "Highest level is at energy " << MaxLevelEnergy() << " MeV "
-     << G4endl << "Lowest level is at energy " << MinLevelEnergy()
-     << " MeV " << G4endl;
+	 << ") has " << nLevels << " levels" << G4endl
+	 << "Highest level is at energy " << MaxLevelEnergy() << " MeV "
+	 << G4endl << "Lowest level is at energy " << MinLevelEnergy()
+	 << " MeV " << G4endl;
 
   for (G4int i=0; i<nLevels; ++i) {
     GetLevel(i)->PrintAll();
@@ -623,8 +625,8 @@ void G4NuclearLevelManager::PrintLevels()
     G4NucleiProperties::GetNuclearMass(_nucleusA, _nucleusZ);
 
   G4cout << "Z= " << _nucleusZ << " A= " << _nucleusA
-     << "  " << nLevels << " levels"
-     << "  Efermi(MeV)= " << efermi << G4endl;
+	 << "  " << nLevels << " levels"
+	 << "  Efermi(MeV)= " << efermi << G4endl;
 
   for (G4int i=0; i<nLevels; ++i) {
     GetLevel(i)->PrintLevels();
@@ -643,9 +645,9 @@ G4NuclearLevelManager::G4NuclearLevelManager(const G4NuclearLevelManager &right)
       G4int n = right._levels->size();
       G4int i;
       for (i=0; i<n; ++i)
-    {
-      _levels->push_back(new G4NuclearLevel(*(right.GetLevel(i))));
-    }
+	{
+	  _levels->push_back(new G4NuclearLevel(*(right.GetLevel(i))));
+	}
       G4PtrSort<G4NuclearLevel>(_levels);
     }
   else

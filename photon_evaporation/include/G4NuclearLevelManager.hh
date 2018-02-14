@@ -83,7 +83,7 @@ public:
   G4NuclearLevel* GetLevelIndexedMultipole(G4int i); // Evan Rand
 
   const G4NuclearLevel* NearestLevel(G4double energy,
-                     G4double eDiffMax=1.e+8) const;
+				     G4double eDiffMax=1.e+8) const;
 
   const G4NuclearLevel* LowestLevel() const;
   const G4NuclearLevel* HighestLevel() const;

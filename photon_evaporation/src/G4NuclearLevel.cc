@@ -63,7 +63,7 @@
 #include "globals.hh"
 #include "G4SystemOfUnits.hh"
 
-#include "G4NuclearLevelStore.hh" // Will Ashfield 
+#include "G4NuclearLevelStore.hh" // Will Ashfield
 
 
 G4int G4NuclearLevel::Increment(G4int aF)
@@ -79,23 +79,23 @@ G4NuclearLevel::G4NuclearLevel()
 }
 
 G4NuclearLevel::G4NuclearLevel(G4double energy, G4double halfLife,
-                   G4double angularMomentum)
+			       G4double angularMomentum)
   : _energy(energy), _halfLife(halfLife), _angularMomentum(angularMomentum),
     _nGammas(0) {
   // G4cout << "####### Incrementing "<<Increment(1)<<G4endl;
 }
 
 G4NuclearLevel::G4NuclearLevel(G4double energy, G4double halfLife,
-                   G4double angularMomentum,
-                   const std::vector<G4double>& eGamma,
-                   const std::vector<G4double>& wGamma,
-                   const std::vector<G4double>& polarities,
-                   const std::vector<G4double>& kCC, const std::vector<G4double>& l1CC,
-                   const std::vector<G4double>& l2CC, const std::vector<G4double>& l3CC,
-                   const std::vector<G4double>& m1CC, const std::vector<G4double>& m2CC,
-                   const std::vector<G4double>& m3CC, const std::vector<G4double>& m4CC,
-                   const std::vector<G4double>& m5CC, const std::vector<G4double>& nPlusCC,
-                   const std::vector<G4double>& totalCC)
+			       G4double angularMomentum,
+			       const std::vector<G4double>& eGamma,
+			       const std::vector<G4double>& wGamma,
+			       const std::vector<G4double>& polarities,
+			       const std::vector<G4double>& kCC, const std::vector<G4double>& l1CC,
+			       const std::vector<G4double>& l2CC, const std::vector<G4double>& l3CC,
+			       const std::vector<G4double>& m1CC, const std::vector<G4double>& m2CC,
+			       const std::vector<G4double>& m3CC, const std::vector<G4double>& m4CC,
+			       const std::vector<G4double>& m5CC, const std::vector<G4double>& nPlusCC,
+			       const std::vector<G4double>& totalCC)
 
   : _energies(eGamma), _weights(wGamma), _polarities(polarities),
      _kCC(kCC), _l1CC(l1CC), _l2CC(l2CC), _l3CC(l3CC),
@@ -289,8 +289,8 @@ G4int G4NuclearLevel::NumberOfGammas() const
 void G4NuclearLevel::PrintAll() const
 {
   G4cout << "---- Level energy = " << _energy << ", angular momentum = "
-     << _angularMomentum << ", half life " << _halfLife
-     << ", " << _nGammas << " photons" << G4endl;
+	 << _angularMomentum << ", half life " << _halfLife
+	 << ", " << _nGammas << " photons" << G4endl;
   G4int i;
   G4cout << "     Gammas: ";
   for (i=0; i<_nGammas; i++) { G4cout << _energies[i] << " "; }
@@ -308,8 +308,8 @@ void G4NuclearLevel::PrintAll() const
 void G4NuclearLevel::PrintLevels() const
 {
   G4cout << "   Eexc(MeV)= " << _energy
-     << " Time(ns)= " << _halfLife/ns << "  Ntrans= " << _nGammas
-     << G4endl;
+	 << " Time(ns)= " << _halfLife/ns << "  Ntrans= " << _nGammas
+	 << G4endl;
 }
 
 void G4NuclearLevel::Finalize() {
@@ -425,6 +425,7 @@ G4NuclearLevel::G4NuclearLevel(const G4NuclearLevel &right)
   _nGammas = right._nGammas;
 }
 
+
 // Evan Rand - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void G4NuclearLevel::FillHigherLevelEnergy(G4int gamma_i, G4int hlevel_i, G4double hlevel_energy)
@@ -460,17 +461,17 @@ void G4NuclearLevel::GenerateWThetaParameters(G4int gamma_i, G4int hlevel_i, G4d
 
 
   // Will Ashfield - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
   if(G4NuclearLevelStore::GetInstance()->manualACcoeffs()){
-    a2 = G4NuclearLevelStore::GetInstance()->GetA2();  
-    a4 = G4NuclearLevelStore::GetInstance()->GetA4(); 
+    a2 = G4NuclearLevelStore::GetInstance()->GetA2();
+    a4 = G4NuclearLevelStore::GetInstance()->GetA4();
     a6 = G4NuclearLevelStore::GetInstance()->GetA6();
     a8 = 0;
     a10 = 0;
   }
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 
   if(boolGoodLevelToOutputToScreen) {
     G4cout << "---------- gamma-gamma angular coefficients ----------" << G4endl;
@@ -478,9 +479,9 @@ void G4NuclearLevel::GenerateWThetaParameters(G4int gamma_i, G4int hlevel_i, G4d
     G4cout << "first gamma in cascade is " << higherGammaEnergy/keV << " keV" << G4endl;
     G4cout << "second gamma in cascade is " << lowerGammaEnergy/keV << " keV" << G4endl;
     if(G4NuclearLevelStore::GetInstance()->manualACcoeffs()){
-    G4cout << "THE ANGULAR COEFFICIENTS HAVE BEEN MANUALLY SET" << G4endl;  
-    G4cout << "The simulation will now overwrite the calculated a2 and a4 coefficients" << G4endl;  
-    G4cout << "This process will overwrite the coefficients for any cascade" << G4endl;  
+    G4cout << "THE ANGULAR COEFFICIENTS HAVE BEEN MANUALLY SET" << G4endl;
+    G4cout << "The simulation will now overwrite the calculated a2 and a4 coefficients" << G4endl;
+    G4cout << "This process will overwrite the coefficients for any cascade" << G4endl;
     } else{
     G4cout << "ji = " << ji << " --> jo = " << jo <<  " --> jf = " << jf << G4endl;
     G4cout << "L1 = " << L1 << ", L1p = " << L1p <<  " - " << "L2 = " << L2 << ", L2p = " << L2p << G4endl;

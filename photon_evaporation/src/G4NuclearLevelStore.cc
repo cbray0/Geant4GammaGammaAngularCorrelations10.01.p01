@@ -23,7 +23,7 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: G4NuclearLevelStore.cc 86986 2014-11-21 13:00:05Z gcosmo $
+// $Id: G4NuclearLevelStore.cc 88406 2015-02-18 09:13:29Z gcosmo $
 //
 // 06-10-2010 M. Kelsey -- Drop static data members.
 // 17-11-2010 V. Ivanchenko - make as a classical singleton.
@@ -63,7 +63,7 @@ G4NuclearLevelStore::G4NuclearLevelStore()
 {
   userFiles = false;
   deconstructMultipole = false; // Evan Rand
-  boolIncludeACcoeffs = false; // Will Ashfield 
+  boolIncludeACcoeffs = false; // Will Ashfield
 
 
   char* env = getenv("G4LEVELGAMMADATA");
@@ -88,15 +88,6 @@ G4NuclearLevelStore::~G4NuclearLevelStore()
     ManagersMap::iterator i;
     for (i = theManagers.begin(); i != theManagers.end(); ++i)
       { delete i->second; }
-    MapForHEP::iterator j;
-    for (j = managersForHEP.begin(); j != managersForHEP.end(); ++j)
-      { delete j->second; }
-    // Evan Rand
-    if(deconstructMultipole) {
-      std::map<G4int, G4String>::iterator l;
-      for (l = theUserDataFilesMultipole.begin(); l != theUserDataFilesMultipole.end(); ++l)
-        { delete l->second; }
-    }
 #ifdef G4MULTITHREADED
   }
 #endif
@@ -104,11 +95,11 @@ G4NuclearLevelStore::~G4NuclearLevelStore()
 
 void
 G4NuclearLevelStore::AddUserEvaporationDataFile(G4int Z, G4int A,
-                        const G4String& filename)
+						const G4String& filename)
 {
   if (Z<1 || A<2) {
     G4cout<<"G4NuclearLevelStore::AddUserEvaporationDataFile "
-      <<" Z= " << Z << " and A= " << A << " not valid!"<<G4endl;
+	  <<" Z= " << Z << " and A= " << A << " not valid!"<<G4endl;
   }
 
   std::ifstream DecaySchemeFile(filename);
@@ -187,7 +178,7 @@ G4NuclearLevelStore::GetManager(G4int Z, G4int A)
   G4NuclearLevelManager * result = 0;
   if (A < 1 || Z < 1 || A < Z)
     {
-      //G4cerr << "G4NuclearLevelStore::GetManager: Wrong values Z = " << Z
+      //G4cout << "G4NuclearLevelStore::GetManager: Wrong values Z = " << Z
       //	       << " A = " << A << '\n';
       return result;
     }
@@ -197,8 +188,6 @@ G4NuclearLevelStore::GetManager(G4int Z, G4int A)
 
   // Check if already exists that key
   ManagersMap::iterator idx = theManagers.find(key);
-
-
 
 #ifdef G4MULTITHREADED
   // If doesn't exists then check the master
@@ -287,50 +276,6 @@ G4NuclearLevelStore::GetManager(G4int Z, G4int A)
 #endif
   else
   // But if it exists...
-  {
-    result = idx->second;
-  }
-
-  return result;
-}
-
-G4LevelManager*
-G4NuclearLevelStore::GetLevelManager(G4int Z, G4int A)
-{
-  G4LevelManager * result = 0;
-  // Generate the key = filename
-  G4int key = Z*1000+A;
-
-  // Check if already exists that key
-  MapForHEP::iterator idx = managersForHEP.find(key);
-
-#ifdef G4MULTITHREADED
-  // If doesn't exists check the master
-  if ( idx == managersForHEP.end() ) {
-    G4MUTEXLOCK(&G4NuclearLevelStore::nuclearLevelStoreMutex);
-    MapForHEP::iterator idxS = theShadowInstance->managersForHEP.find(key);
-    if ( idxS == theShadowInstance->managersForHEP.end() ) {
-      // If doesn't exists create it
-      result = new G4LevelManager(Z,A,reader,
-                dirName + GenerateFileName(Z,A));
-      theShadowInstance->managersForHEP.insert(std::make_pair(key,result));
-    }
-    else
-    { result = idxS->second; }
-    // register to the local map
-    managersForHEP.insert(std::make_pair(key,result));
-    G4MUTEXUNLOCK(&G4NuclearLevelStore::nuclearLevelStoreMutex);
-  }
-#else
-  // If doesn't exists then create it
-  if ( idx == managersForHEP.end() ) {
-    result = new G4LevelManager(Z,A,reader,
-                dirName + GenerateFileName(Z,A));
-    managersForHEP.insert(std::make_pair(key,result));
-  }
-#endif
-  else
-    // it exists
   {
     result = idx->second;
   }
