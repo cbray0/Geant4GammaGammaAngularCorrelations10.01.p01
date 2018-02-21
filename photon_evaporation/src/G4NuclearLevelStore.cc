@@ -88,6 +88,15 @@ G4NuclearLevelStore::~G4NuclearLevelStore()
     ManagersMap::iterator i;
     for (i = theManagers.begin(); i != theManagers.end(); ++i)
       { delete i->second; }
+    MapForHEP::iterator j; // Connor Bray
+    for (j = managersForHEP.begin(); j != managersForHEP.end(); ++j) // Connor Bray
+      { delete j->second; } // Connor Bray
+    // Evan Rand
+    if(deconstructMultipole) {
+      std::map<G4int, G4String>::iterator l;
+      for (l = theUserDataFilesMultipole.begin(); l != theUserDataFilesMultipole.end(); ++l)
+        { delete l->second; }
+    }
 #ifdef G4MULTITHREADED
   }
 #endif

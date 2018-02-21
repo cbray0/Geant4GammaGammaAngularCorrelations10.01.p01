@@ -42,6 +42,8 @@
 #define G4NuclearLevelStore_hh 1
 
 #include "G4NuclearLevelManager.hh"
+#include "G4LevelManager.hh" // Connor Bray
+#include "G4LevelReader.hh" // Connor Bray
 #include "G4ThreadLocalSingleton.hh"
 #include "globals.hh"
 #include <map>
@@ -100,9 +102,11 @@ private:
   G4String GenerateFileName(G4int Z, G4int A) const;
 
   typedef std::map<G4int,G4NuclearLevelManager*> ManagersMap;
+  typedef std::map<G4int,G4LevelManager*> MapForHEP; // Connor Bray
 
+  G4LevelReader reader; // Connor Bray
   ManagersMap   theManagers;
-
+  MapForHEP     managersForHEP; // Connor Bray
   G4String      dirName;
 
   // Evan Rand - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

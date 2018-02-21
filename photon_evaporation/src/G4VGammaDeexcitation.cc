@@ -77,7 +77,7 @@
 G4VGammaDeexcitation::G4VGammaDeexcitation(): _transition(0), _verbose(0),
 					      _electronO (0), _vSN(-1)
 {
-  _tolerance = 0.1*CLHEP::keV;
+  _tolerance = 2*CLHEP::keV; // Connor Bray (was:  _tolerance = 0.1*CLHEP::keV;)
   _timeLimit = DBL_MAX;
 }
 
@@ -109,7 +109,7 @@ void G4VGammaDeexcitation::DoChain(G4FragmentVector* products,
 }
 
 G4Fragment* G4VGammaDeexcitation::GenerateGamma(G4Fragment* aNucleus)
-{
+{ // Connor Bray (Most of this code was modified for G4GGAC. check here if things dont work.)
   G4Fragment * thePhoton = 0;
   _vSN = -1;
 
@@ -229,6 +229,7 @@ G4Fragment* G4VGammaDeexcitation::GenerateGamma(G4Fragment* aNucleus)
   	 << " tlim= " << _timeLimit << G4endl;
   */
   // 2-body decay in rest frame
+  // Connor Bray (from here to end of else is also different, so check here too.)
   G4double Ecm       = lv.mag();
   G4ThreeVector bst  = lv.boostVector();
 

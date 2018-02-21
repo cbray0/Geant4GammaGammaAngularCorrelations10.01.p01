@@ -92,12 +92,9 @@
 // 0.b.4 release. Changes are:
 //            1) Use PhotonEvaporation instead of DiscreteGammaDeexcitation
 //            2) VR: Significant efficiency improvement
-//
 // 29 February 2000, P R Truscott, DERA UK
 // 0.b.3 release.
-//
 ///////////////////////////////////////////////////////////////////////////////
-//
 #include "G4RadioactiveDecay.hh"
 #include "G4RadioactiveDecaymessenger.hh"
 
@@ -169,6 +166,17 @@ G4RadioactiveDecay::G4RadioactiveDecay(const G4String& processName)
 
   theRadioactiveDecaymessenger = new G4RadioactiveDecaymessenger(this);
   pParticleChange = &fParticleChangeForRadDecay;
+  theIsotopeTable = new G4RIsotopeTable(); // Connor Bray
+
+  // Regsiter the isotope table to the ion table.
+  // Although we are touching the ion table, which is shared, we are not
+  // adding particles in this operation.  We can therefore do the registration
+  // for each instance of the RDM process and do not need to restrict it to the
+  // master process.  It's possible that future, more optimized versions of
+  // G4IonTable will require to test for master.
+
+  G4IonTable* theIonTable = G4ParticleTable::GetParticleTable()->GetIonTable(); // Connor Bray
+  theIonTable->RegisterIsotopeTable(theIsotopeTable); // Connor Bray
 
   // Reset the list of user defined data files
   theUserRadioactiveDataFiles.clear();
@@ -211,6 +219,7 @@ G4RadioactiveDecay::G4RadioactiveDecay(const G4String& processName)
 G4RadioactiveDecay::~G4RadioactiveDecay()
 {
   delete theRadioactiveDecaymessenger;
+  delete theIsotopeTable; // Connor Bray
   for (DecayTableMap::iterator i = dkmap->begin(); i != dkmap->end(); i++) {
     delete i->second;
   }
@@ -616,6 +625,7 @@ G4double G4RadioactiveDecay::GetMeanLifeTime(const G4Track& theTrack,
     const G4DynamicParticle* theParticle = theTrack.GetDynamicParticle();
     const G4ParticleDefinition* theParticleDef = theParticle->GetDefinition();
     G4double theLife = theParticleDef->GetPDGLifeTime();
+
 #ifdef G4VERBOSE
     if (GetVerboseLevel() > 2) {
        G4cout << "G4RadioactiveDecay::GetMeanLifeTime() " << G4endl;
@@ -742,6 +752,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
   // file containing radioactive decay data.
   G4int A = ((const G4Ions*)(&theParentNucleus))->GetAtomicMass();
   G4int Z = ((const G4Ions*)(&theParentNucleus))->GetAtomicNumber();
+  G4int lvl = ((const G4Ions*)(&theParentNucleus))->GetIsomerLevel();
   G4double levelEnergy = ((const G4Ions*)(&theParentNucleus))->GetExcitationEnergy();
   G4DecayTable* theDecayTable = 0;
 
@@ -780,7 +791,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
   G4bool found(false);
   if (DecaySchemeFile) {
     // Initialise variables used for reading in radioactive decay data.
-    const G4int nMode = 9;
+    const G4int nMode = 8; // Connor Bray (was 9)
     G4bool modeFirstRecord[nMode];
     G4double modeTotalBR[nMode] = {0.0};
     G4double modeSumBR[nMode];
@@ -797,7 +808,9 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
     G4double a(0.0);
     G4double b(0.0);
     G4double c(0.0);
+    G4int levelCounter = 0;
     G4BetaDecayType betaType(allowed);
+    G4double e0;
 
     // Loop through each data file record until you identify the decay
     // data relating to the nuclide of concern.
@@ -824,9 +837,11 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
           tmpStream >> recordType >> a >> b;
           if (found) {
             complete = true;
+//        else {found = (std::abs(a*keV - E) < levelTolerance);}
           } else {
-            found = (std::abs(a*keV - levelEnergy) < levelTolerance);
+            found = (levelCounter == lvl); // Connor Bray
           }
+          levelCounter++; // Connor Bray
 
         } else if (found) {
           // The right part of the radioactive decay data file has been found.  Search
@@ -842,6 +857,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
 #endif
           } else {
             tmpStream >> theDecayMode >> a >> b >> c >> betaType;
+
             // Allowed transitions are the default. Forbidden transitions are
             // indicated in the last column.
             if (inputLine.length() < 80) betaType = allowed;
@@ -856,8 +872,18 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                                                        c*MeV, a*MeV);
 //                anITChannel->DumpNuclearInfo();
                 anITChannel->SetHLThreshold(halflifethreshold);
+                // anITChannel->SetICM(applyICM); // Connor Bray
                 anITChannel->SetARM(applyARM);
                 theDecayTable->Insert(anITChannel);
+                /* // Connor Bray
+                was:
+                  G4ITDecayChannel* anITChannel =
+                    new G4ITDecayChannel(GetVerboseLevel(),
+                                         (const G4Ions*)& theParentNucleus, b);
+                  anITChannel->SetARM(applyARM);
+                  anITChannel->SetHLThreshold(halflifethreshold);
+                  theDecayTable->Insert(anITChannel);
+                  */
               }
               break;
 
@@ -874,11 +900,55 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                   aBetaMinusChannel->SetHLThreshold(halflifethreshold);
                   theDecayTable->Insert(aBetaMinusChannel);
                   modeSumBR[1] += b;
+                  /* // Connor Bray
+                  was:
+                  if (modeFirstRecord[1]) {
+                    modeFirstRecord[1] = false;
+                    modeTotalBR[1] = b;
+                  } else {
+                    if (c > 0.) {
+                      e0 = c*MeV/0.511;
+                      G4BetaDecayCorrections corrections(Z+1, A);
+
+                      // array to store function shape
+                      G4int npti = 100;
+                      G4double* pdf = new G4double[npti];
+
+                      G4double e;   // Total electron energy in units of electron mass
+                      G4double p;   // Electron momentum in units of electron mass
+                      G4double f;   // Spectral shape function value
+                      for (G4int ptn = 0; ptn < npti; ptn++) {
+                        // Calculate simple phase space spectrum
+                        e = 1. + e0*(ptn+0.5)/100.;
+                        p = std::sqrt(e*e - 1.);
+                        f = p*e*(e0-e+1)*(e0-e+1);
+
+                        // Apply Fermi factor to get allowed shape
+                        f *= corrections.FermiFunction(e);
+
+                        // Apply shape factor for forbidden transitions
+                        f *= corrections.ShapeFactor(betaType, p, e0-e+1.);
+                        pdf[ptn] = f;
+                      }
+
+                      G4RandGeneral* aRandomEnergy = new G4RandGeneral( pdf, npti);
+                      G4BetaMinusDecayChannel *aBetaMinusChannel = new
+                      G4BetaMinusDecayChannel(GetVerboseLevel(), &theParentNucleus,
+                                              b, c*MeV, a*MeV, 0, FBeta, aRandomEnergy);
+                      aBetaMinusChannel->SetICM(applyICM);
+                      aBetaMinusChannel->SetARM(applyARM);
+                      aBetaMinusChannel->SetHLThreshold(halflifethreshold);
+                      theDecayTable->Insert(aBetaMinusChannel);
+                      modeSumBR[1] += b;
+                      delete[] pdf;
+                    } // c > 0
+                  } // if not first record
+                  */
                 } // if not first record
               }
               break;
 
-              case BetaPlus:
+          case BetaPlus: // Connor Bray (there were changes here too.)
               {
                 if (modeFirstRecord[2]) {
                   modeFirstRecord[2] = false;
@@ -895,6 +965,38 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
               }
               break;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
               case KshellEC:  // K-shell electron capture
 
                 if (modeFirstRecord[3]) {
@@ -905,6 +1007,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                                                          c*MeV, a*MeV, KshellEC);
 //                  aKECChannel->DumpNuclearInfo();
                   aKECChannel->SetHLThreshold(halflifethreshold);
+                //   aKECChannel->SetICM(applyICM);  // Connor Bray
                   aKECChannel->SetARM(applyARM);
                   theDecayTable->Insert(aKECChannel);
                   modeSumBR[3] += b;
@@ -921,11 +1024,14 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                                                          c*MeV, a*MeV, LshellEC);
 //                  aLECChannel->DumpNuclearInfo();
                   aLECChannel->SetHLThreshold(halflifethreshold);
+                //   aLECChannel->SetICM(applyICM);  // Connor Bray
                   aLECChannel->SetARM(applyARM);
                   theDecayTable->Insert(aLECChannel);
                   modeSumBR[4] += b;
                 }
                 break;
+
+
 
               case MshellEC:  // M-shell electron capture
                               // In this implementation it is added to L-shell case
@@ -936,12 +1042,14 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                   G4ECDecay* aMECChannel = new G4ECDecay(&theParentNucleus, b,
                                                          c*MeV, a*MeV, MshellEC);
 //                  aMECChannel->DumpNuclearInfo();
+                //   aMECChannel->SetICM(applyICM);  // Connor Bray
                   aMECChannel->SetHLThreshold(halflifethreshold);
                   aMECChannel->SetARM(applyARM);
                   theDecayTable->Insert(aMECChannel);
                   modeSumBR[5] += b;
                 }
                 break;
+
 
               case Alpha:
             	if (modeFirstRecord[6]) {
@@ -966,6 +1074,8 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                      new G4ProtonDecay(&theParentNucleus, b, c*MeV, a*MeV);
 //                  aProtonChannel->DumpNuclearInfo();
                   aProtonChannel->SetHLThreshold(halflifethreshold);
+                //   aProtonChannel->SetICM(applyICM);  // Connor Bray
+                //   aProtonChannel->SetARM(applyARM); // Connor Bray
                   theDecayTable->Insert(aProtonChannel);
                   modeSumBR[7] += b;
                 }
@@ -980,6 +1090,8 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                      new G4NeutronDecay(&theParentNucleus, b, c*MeV, a*MeV);
 //                  aNeutronChannel->DumpNuclearInfo();
                   aNeutronChannel->SetHLThreshold(halflifethreshold);
+                //   aNeutronChannel->SetICM(applyICM);  // Connor Bray
+                //   aNeutronChannel->SetARM(applyARM); // Connor Bray
                   theDecayTable->Insert(aNeutronChannel);
                   modeSumBR[8] += b;
                 }
@@ -1049,6 +1161,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
     // Decay mode is isomeric transition.
     G4ITDecay* anITChannel = new G4ITDecay(&theParentNucleus, 1.0, 0.0, 0.0);
     anITChannel->SetHLThreshold(halflifethreshold);
+    // anITChannel->SetICM(applyICM);  // Connor Bray
     anITChannel->SetARM(applyARM);
     theDecayTable->Insert(anITChannel);
   }
@@ -1066,10 +1179,15 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
   }
 
 #ifdef G4MULTITHREADED
-  //(*master_dkmap)[key] = theDecayTable;                  // store in master library
+  (*master_dkmap)[key] = theDecayTable;                  // store in master library  // Connor Bray
 #endif
   return theDecayTable;
 }
+
+
+
+
+
 
 void
 G4RadioactiveDecay::AddUserDecayDataFile(G4int Z, G4int A, G4String filename)
@@ -1080,6 +1198,7 @@ G4RadioactiveDecay::AddUserDecayDataFile(G4int Z, G4int A, G4String filename)
   if (DecaySchemeFile) {
     G4int ID_ion = A*1000 + Z;
     theUserRadioactiveDataFiles[ID_ion] = filename;
+    theIsotopeTable->AddUserDecayDataFile(Z,A,filename); // Connor Bray
   } else {
     G4cout << "The file " << filename << " does not exist!" << G4endl;
   }
@@ -1172,7 +1291,7 @@ G4RadioactiveDecay::AddDecayRateTable(const G4ParticleDefinition& theParentNucle
   G4double TaoPlus;
   G4int nS = 0;
   G4int nT = nEntry;
-  const G4int nMode = 9;
+  const G4int nMode = 8;  // Connor Bray (was 9)
   G4double brs[nMode];
   //
   theIonTable =
@@ -1209,7 +1328,6 @@ G4RadioactiveDecay::AddDecayRateTable(const G4ParticleDefinition& theParentNucle
       // Local decay table for accessing BRs and decay channels, but channels
       // stored in it are not used to perform the actual decays
       G4DecayTable* theDecayTable = new G4DecayTable();
-
       for (G4int k = 0; k < nMode; k++) brs[k] = 0.0;
 
       // Go through the decay table and sum all channels having the same decay mode
@@ -1296,6 +1414,8 @@ G4RadioactiveDecay::AddDecayRateTable(const G4ParticleDefinition& theParentNucle
           }
         }
       }
+
+
       // loop over all branches in theDecayTable
       //
       for (i = 0; i < theDecayTable->entries(); i++){
@@ -1569,6 +1689,7 @@ G4RadioactiveDecay::DecayIt(const G4Track& theTrack, const G4Step&)
     ClearNumberOfInteractionLengthLeft();
     return &fParticleChangeForRadDecay;
   }
+
   G4DecayTable* theDecayTable = GetDecayTable(theParticleDef);
 
   if (theDecayTable == 0 || theDecayTable->entries() == 0) {
@@ -1885,7 +2006,7 @@ G4RadioactiveDecay::DoDecay(const G4ParticleDefinition& theParticleDef)
     // Apply directional bias if requested by user
     CollimateDecay(products);
   }
-  
+
   // Evan Rand - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   G4int daughterZ, daughterA;
   G4int parentZ = theParticleDef.GetAtomicNumber();

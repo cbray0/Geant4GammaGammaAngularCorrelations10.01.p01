@@ -343,7 +343,6 @@ void G4NuclearLevelManager::MakeLevels(const G4String& filename)
 
   G4NuclearLevel* thisLevel = 0;
   G4int nData = 0;
-
   // Loop checking, 05-Aug-2015, Vladimir Ivanchenko
   while (Read(inFile)) {
     thisLevel = UseLevelOrMakeNew(thisLevel);	// May create new pointer

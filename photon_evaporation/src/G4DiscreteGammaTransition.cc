@@ -77,7 +77,7 @@
 #include "G4Pow.hh"
 #include "G4Log.hh"
 
-static const G4double tolerance = 0.1*CLHEP::keV;
+static const G4double toleranceNew = 10*CLHEP::keV; // Connor Bray (was: static const G4double tolerance = 0.1*CLHEP::keV; )
 
 G4DiscreteGammaTransition::G4DiscreteGammaTransition(
   const G4NuclearLevel* level, G4int Z, G4int verb)
@@ -127,7 +127,7 @@ void G4DiscreteGammaTransition::SelectGamma()
     // this check is needed to remove cases when nucleaus is left in
     // slightly excited state which will require very low energy
     // gamma emission
-    if(excitation <= gammaEnergy + tolerance) { gammaEnergy = excitation; }
+    if(excitation <= gammaEnergy + toleranceNew) { gammaEnergy = excitation; }
     //JMQ:
     //1)If chosen gamma energy is close enough to excitation energy,
     //  the later is used instead for gamma dacey to gs (it guarantees
@@ -153,7 +153,7 @@ void G4DiscreteGammaTransition::SelectGamma()
     //          I leave this for a later revision.
 
     // VI: the check is needed to remove very low-energy gamma
-    if (gammaEnergy <= tolerance) { gammaEnergy = excitation; }
+    if (gammaEnergy <= toleranceNew) { gammaEnergy = excitation; }
     /*
     G4cout << "G4DiscreteGammaTransition::SelectGamma: " << gammaEnergy
 	   << " Eexc= " << excitation
@@ -202,6 +202,7 @@ void G4DiscreteGammaTransition::SelectGamma()
 	    { iShell = 8;}
 	  // the following is needed to match the ishell to that used in
 	  // G4AtomicShells
+      /*
 	  if ( iShell == 9) {
 	    if ( (nucleusZ < 28) && (nucleusZ > 20)) {
 	      iShell--;
@@ -209,6 +210,7 @@ void G4DiscreteGammaTransition::SelectGamma()
 	      iShell = iShell -2;
 	    }
 	  }
+      */
 	  //L.Desorgher 02/11/2011
 	  //Atomic shell information is available in Geant4 only up top Z=100
 	  //To extend the photo evaporation code to Z>100  the call
@@ -225,7 +227,7 @@ void G4DiscreteGammaTransition::SelectGamma()
 	  }
 
 	  // last check on energy
-	  if(gammaEnergy >  bondE + tolerance) {
+	  if(gammaEnergy >  bondE + toleranceNew) {
 	    orbitE = iShell;
 	    aGamma = false ;   // emitted is not a gamma now
 	    gammaEnergy -= bondE;
