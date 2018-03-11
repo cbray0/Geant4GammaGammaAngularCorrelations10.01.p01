@@ -135,6 +135,17 @@
 #include "G4VAtomDeexcitation.hh"
 #include "G4UAtomicDeexcitation.hh"
 
+#include "G4BetaDecayCorrections.hh" // Connor Bray (old)
+#include "G4BetaMinusDecayChannel.hh" // Connor Bray (old)
+#include "G4BetaPlusDecayChannel.hh" // Connor Bray (old)
+#include "G4ITDecayChannel.hh" // Connor Bray (old)
+#include "G4KshellECDecayChannel.hh" // Connor Bray (old)
+#include "G4LshellECDecayChannel.hh" // Connor Bray (old)
+#include "G4MshellECDecayChannel.hh" // Connor Bray (old)
+#include "G4ProtonDecayChannel.hh" // Connor Bray (old)
+#include "G4RIsotopeTable.hh" // Connor Bray (old)
+#include "G4BetaDecayCorrections.hh" // Connor Bray (old)
+
 #include <vector>
 #include <sstream>
 #include <algorithm>
@@ -868,22 +879,22 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
 
               case IT:   // Isomeric transition
               {
+                  /* new:
                 G4ITDecay* anITChannel = new G4ITDecay(&theParentNucleus, b,
                                                        c*MeV, a*MeV);
 //                anITChannel->DumpNuclearInfo();
                 anITChannel->SetHLThreshold(halflifethreshold);
-                // anITChannel->SetICM(applyICM); // Connor Bray
                 anITChannel->SetARM(applyARM);
                 theDecayTable->Insert(anITChannel);
                 /* // Connor Bray
-                was:
+                was:*/
                   G4ITDecayChannel* anITChannel =
                     new G4ITDecayChannel(GetVerboseLevel(),
                                          (const G4Ions*)& theParentNucleus, b);
                   anITChannel->SetARM(applyARM);
                   anITChannel->SetHLThreshold(halflifethreshold);
                   theDecayTable->Insert(anITChannel);
-                  */
+                  //*/
               }
               break;
 
@@ -892,6 +903,8 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                 if (modeFirstRecord[1]) {
                   modeFirstRecord[1] = false;
                   modeTotalBR[1] = b;
+                  /*
+                  new:
                 } else {
                   G4BetaMinusDecay* aBetaMinusChannel =
                     new G4BetaMinusDecay(&theParentNucleus, b, c*MeV, a*MeV,
@@ -902,48 +915,45 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                   modeSumBR[1] += b;
                   /* // Connor Bray
                   was:
-                  if (modeFirstRecord[1]) {
-                    modeFirstRecord[1] = false;
-                    modeTotalBR[1] = b;
-                  } else {
-                    if (c > 0.) {
-                      e0 = c*MeV/0.511;
-                      G4BetaDecayCorrections corrections(Z+1, A);
-
-                      // array to store function shape
-                      G4int npti = 100;
-                      G4double* pdf = new G4double[npti];
-
-                      G4double e;   // Total electron energy in units of electron mass
-                      G4double p;   // Electron momentum in units of electron mass
-                      G4double f;   // Spectral shape function value
-                      for (G4int ptn = 0; ptn < npti; ptn++) {
-                        // Calculate simple phase space spectrum
-                        e = 1. + e0*(ptn+0.5)/100.;
-                        p = std::sqrt(e*e - 1.);
-                        f = p*e*(e0-e+1)*(e0-e+1);
-
-                        // Apply Fermi factor to get allowed shape
-                        f *= corrections.FermiFunction(e);
-
-                        // Apply shape factor for forbidden transitions
-                        f *= corrections.ShapeFactor(betaType, p, e0-e+1.);
-                        pdf[ptn] = f;
-                      }
-
-                      G4RandGeneral* aRandomEnergy = new G4RandGeneral( pdf, npti);
-                      G4BetaMinusDecayChannel *aBetaMinusChannel = new
-                      G4BetaMinusDecayChannel(GetVerboseLevel(), &theParentNucleus,
-                                              b, c*MeV, a*MeV, 0, FBeta, aRandomEnergy);
-                      aBetaMinusChannel->SetICM(applyICM);
-                      aBetaMinusChannel->SetARM(applyARM);
-                      aBetaMinusChannel->SetHLThreshold(halflifethreshold);
-                      theDecayTable->Insert(aBetaMinusChannel);
-                      modeSumBR[1] += b;
-                      delete[] pdf;
-                    } // c > 0
-                  } // if not first record
                   */
+                } else {
+                  if (c > 0.) {
+                    e0 = c*MeV/0.511;
+                    G4BetaDecayCorrections corrections(Z+1, A);
+
+                    // array to store function shape
+                    G4int npti = 100;
+                    G4double* pdf = new G4double[npti];
+
+                    G4double e;   // Total electron energy in units of electron mass
+                    G4double p;   // Electron momentum in units of electron mass
+                    G4double f;   // Spectral shape function value
+                    for (G4int ptn = 0; ptn < npti; ptn++) {
+                      // Calculate simple phase space spectrum
+                      e = 1. + e0*(ptn+0.5)/100.;
+                      p = std::sqrt(e*e - 1.);
+                      f = p*e*(e0-e+1)*(e0-e+1);
+
+                      // Apply Fermi factor to get allowed shape
+                      f *= corrections.FermiFunction(e);
+
+                      // Apply shape factor for forbidden transitions
+                      f *= corrections.ShapeFactor(betaType, p, e0-e+1.);
+                      pdf[ptn] = f;
+                    }
+
+                    G4RandGeneral* aRandomEnergy = new G4RandGeneral( pdf, npti);
+                    G4BetaMinusDecayChannel *aBetaMinusChannel = new
+                    G4BetaMinusDecayChannel(GetVerboseLevel(), &theParentNucleus,
+                                            b, c*MeV, a*MeV, 0, FBeta, aRandomEnergy);
+                    aBetaMinusChannel->SetICM(applyICM);
+                    aBetaMinusChannel->SetARM(applyARM);
+                    aBetaMinusChannel->SetHLThreshold(halflifethreshold);
+                    theDecayTable->Insert(aBetaMinusChannel);
+                    modeSumBR[1] += b;
+                    delete[] pdf;
+                  } // c > 0
+                  //*/
                 } // if not first record
               }
               break;
@@ -954,6 +964,7 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                   modeFirstRecord[2] = false;
                   modeTotalBR[2] = b;
                 } else {
+                    /* new: // Connor Bray
                   G4BetaPlusDecay* aBetaPlusChannel =
                     new G4BetaPlusDecay(&theParentNucleus, b, c*MeV, a*MeV,
                                         betaType);
@@ -961,6 +972,47 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
                   aBetaPlusChannel->SetHLThreshold(halflifethreshold);
                   theDecayTable->Insert(aBetaPlusChannel);
                   modeSumBR[2] += b;
+                } // if not first record
+                was: */ // Connor Bray
+                  e0 = c*MeV/0.510999 - 2.;
+                  // Need to test e0 for nuclei which have Q < 2Me in their
+                  // data files (e.g. z67.a162)
+                  if (e0 > 0.) {
+                    G4BetaDecayCorrections corrections(1-Z, A);
+
+                    // array to store function shape
+                    G4int npti = 100;
+                    G4double* pdf = new G4double[npti];
+
+                    G4double e;   // Total positron energy in units of electron mass
+                    G4double p;   // Positron momentum in units of electron mass
+                    G4double f;   // Spectral shape function value
+                    for (G4int ptn = 0; ptn < npti; ptn++) {
+                      // Calculate simple phase space spectrum
+                      e = 1. + e0*(ptn+0.5)/100.;
+                      p = std::sqrt(e*e - 1.);
+                      f = p*e*(e0-e+1)*(e0-e+1);
+
+                      // Apply Fermi factor to get allowed shape
+                      f *= corrections.FermiFunction(e);
+
+                      // Apply shape factor for forbidden transitions
+                      f *= corrections.ShapeFactor(betaType, p, e0-e+1.);
+                      pdf[ptn] = f;
+                    }
+                    G4RandGeneral* aRandomEnergy = new G4RandGeneral(pdf, npti);
+                    G4BetaPlusDecayChannel* aBetaPlusChannel = new
+                        G4BetaPlusDecayChannel(GetVerboseLevel(),
+                                               &theParentNucleus, b,
+                                               (c-1.021998)*MeV, a*MeV, 0,
+                                               FBeta, aRandomEnergy);
+                    aBetaPlusChannel->SetICM(applyICM);
+                    aBetaPlusChannel->SetARM(applyARM);
+                    aBetaPlusChannel->SetHLThreshold(halflifethreshold);
+                    theDecayTable->Insert(aBetaPlusChannel);
+                    modeSumBR[2] += b;
+                    delete[] pdf;
+                  } // if e0 > 0
                 } // if not first record
               }
               break;
@@ -1178,9 +1230,9 @@ G4RadioactiveDecay::LoadDecayTable(const G4ParticleDefinition& theParentNucleus)
     theDecayTable->DumpInfo();
   }
 
-#ifdef G4MULTITHREADED
-  (*master_dkmap)[key] = theDecayTable;                  // store in master library  // Connor Bray
-#endif
+// #ifdef G4MULTITHREADED
+  // (*master_dkmap)[key] = theDecayTable;                  // store in master library  // Connor Bray
+// #endif
   return theDecayTable;
 }
 
